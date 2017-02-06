@@ -11,6 +11,20 @@
 </style>
 <script type="text/javascript">
     document.addEventListener("DOMContentLoaded", function (event) {
+        var osm = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+        });
+
+        var OpenMapSurfer_Roads = L.tileLayer('http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            attribution: 'Imagery from <a href="http://giscience.uni-hd.de/">GIScience Research Group @ University of Heidelberg</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        });
+
+        var base_maps = {
+            "OpenMapSurfer_Roads": OpenMapSurfer_Roads,
+            'OpenStreetMap': osm
+        };
+
         var overlay_layers = {};
 
         var firstProjection = proj4('EPSG:3857');
@@ -19,15 +33,28 @@
         var point_wsg84 = proj4(firstProjection,secondProjection,[{{ resource.center_x }}, {{ resource.center_y }}]);
 
         map = L.map('the_map').setView([point_wsg84[1], point_wsg84[0]],6);;
-
         map.setZoom({{ resource.zoom }});
 
-        {% for layer in layers %}
-            var wmsLayer = L.tileLayer.wms('{{ layer.ows_url }}', {
-                layers: '{{ layer.name }}'
-            }).addTo(map);
-        {% endfor%}         
+        var wmsLayer = null;
 
+        {% for layer in layers %}
+
+            if ("{{ layer.group }}" != 'background') {
+                wmsLayer = L.tileLayer.wms('{{ layer.ows_url }}', {
+                    layers: '{{ layer.name }}',
+                    'opacity': 0.8
+                });    
+            }
+        {% endfor %}
+
+        if (wmsLayer != null) {
+            overlay_layers["{{ resource.title }}"] = wmsLayer;
+            map.addLayer(wmsLayer);
+        }
+
+        layerControl = L.control.layers(
+                base_maps, overlay_layers
+        ).addTo(map);
     });
 
     function zoom_to_box(map, bbox) {
