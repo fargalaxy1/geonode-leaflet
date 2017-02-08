@@ -56,15 +56,15 @@
                     transparent: true,
                     layers: '{{ layer.name }}',
                     'opacity': 0.8
-                });    
+                });   
+                /* add wmsLayer to the overlay_layers{} and to the map object itself */
+                if (wmsLayer != null) {
+                    overlay_layers["{{ resource.title }}"] = wmsLayer;
+                    map.addLayer(wmsLayer);
+                }
             }
         {% endfor %}
 
-        /* add the user layer to the overlay_layers{} and to the map object itself */
-        if (wmsLayer != null) {
-            overlay_layers["{{ resource.title }}"] = wmsLayer;
-            map.addLayer(wmsLayer);
-        }
         /* add layers control to allow switching between different base layers and switching overlays on/off */
         layerControl = L.control.layers(
                 base_maps, overlay_layers
